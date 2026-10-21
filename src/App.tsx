@@ -5,6 +5,8 @@ import { MapView } from './components/MapView';
 import { WizardPanel } from './components/WizardPanel';
 import { AnalysisPanel } from './components/AnalysisPanel';
 import { ArchitecturePanel } from './components/ArchitecturePanel';
+import { DataInputPanel } from './components/DataInputPanel';
+import { GEEScriptPanel } from './components/GEEScriptPanel';
 import { StatusBar } from './components/StatusBar';
 
 export default function App() {
@@ -40,6 +42,16 @@ export default function App() {
           {/* Architecture Documentation */}
           {activePanel === 'architecture' && (
             <ArchitecturePanel />
+          )}
+          
+          {/* Data Input Panel */}
+          {activePanel === 'data-input' && (
+            <DataInputPanel />
+          )}
+          
+          {/* GEE Script Runner */}
+          {activePanel === 'gee-scripts' && (
+            <GEEScriptPanel />
           )}
         </div>
       </div>

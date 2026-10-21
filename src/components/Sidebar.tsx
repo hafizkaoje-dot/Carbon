@@ -1,8 +1,10 @@
 import { useAppStore } from '../store/appStore';
-import { Layers, BarChart3, Settings, BookOpen, Map, Database, ChevronRight } from 'lucide-react';
+import { Layers, BarChart3, Settings, BookOpen, Map, Database, ChevronRight, Upload, FileCode } from 'lucide-react';
 
 const navItems = [
   { id: 'layers' as const, label: 'Layers', icon: Layers, description: 'Manage map layers' },
+  { id: 'data-input' as const, label: 'Data Input', icon: Upload, description: 'Upload data & set parameters' },
+  { id: 'gee-scripts' as const, label: 'GEE Scripts', icon: FileCode, description: 'Run Python scripts on GEE' },
   { id: 'analysis' as const, label: 'Analysis', icon: BarChart3, description: 'Run LCLU & Carbon analysis' },
   { id: 'results' as const, label: 'Results', icon: Map, description: 'View analysis outputs' },
   { id: 'architecture' as const, label: 'Architecture', icon: BookOpen, description: 'System documentation' },
@@ -10,7 +12,7 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const { activePanel, setActivePanel, engineMode, userMode, layers, analysisResults } = useAppStore();
+  const { activePanel, setActivePanel, engineMode, userMode, layers, analysisResults, uploadedFiles } = useAppStore();
 
   return (
     <aside className="w-72 bg-slate-800 border-r border-slate-700 flex flex-col shrink-0 overflow-hidden">
@@ -56,8 +58,8 @@ export function Sidebar() {
             <p className="text-xs font-semibold text-violet-400 capitalize">{userMode}</p>
           </div>
           <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-700/50">
-            <p className="text-[10px] text-slate-500">Layers</p>
-            <p className="text-xs font-semibold">{layers.filter(l => l.visible).length}/{layers.length}</p>
+            <p className="text-[10px] text-slate-500">Files</p>
+            <p className="text-xs font-semibold">{uploadedFiles.length}</p>
           </div>
           <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-700/50">
             <p className="text-[10px] text-slate-500">Results</p>
@@ -72,6 +74,8 @@ export function Sidebar() {
       {/* Active Panel Content */}
       <div className="flex-1 overflow-y-auto p-3">
         {activePanel === 'layers' && <LayersPanel />}
+        {activePanel === 'data-input' && <DataInputQuickPanel />}
+        {activePanel === 'gee-scripts' && <GEEScriptsQuickPanel />}
         {activePanel === 'results' && <ResultsPanel />}
         {activePanel === 'settings' && <SettingsPanel />}
       </div>
@@ -192,6 +196,112 @@ function SettingsPanel() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function DataInputQuickPanel() {
+  const { uploadedFiles, setActivePanel, aoi, analysisParams } = useAppStore();
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-xs font-semibold text-slate-300">Data Input Summary</h3>
+      
+      {/* AOI Status */}
+      <div className={`p-2.5 rounded-lg border ${aoi ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-900/40 border-slate-700/50'}`}>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] text-slate-500">Area of Interest</p>
+          {aoi ? (
+            <span className="text-[10px] text-emerald-400">✓ Set</span>
+          ) : (
+            <span className="text-[10px] text-amber-400">⚠ Not set</span>
+          )}
+        </div>
+        {aoi && <p className="text-[10px] text-slate-400 mt-0.5">{aoi.properties.area_km2} km²</p>}
+      </div>
+
+      {/* Uploaded Files */}
+      <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-700/50">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] text-slate-500">Uploaded Files</p>
+          <span className="text-[10px] text-white">{uploadedFiles.length}</span>
+        </div>
+        {uploadedFiles.length > 0 && (
+          <div className="mt-1 space-y-0.5">
+            {uploadedFiles.slice(0, 3).map((f) => (
+              <p key={f.id} className="text-[10px] text-slate-400 truncate">{f.name}</p>
+            ))}
+            {uploadedFiles.length > 3 && (
+              <p className="text-[10px] text-slate-500">+{uploadedFiles.length - 3} more</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Parameters */}
+      <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-700/50">
+        <p className="text-[10px] text-slate-500 mb-1">Parameters</p>
+        <p className="text-[10px] text-slate-400">{analysisParams.startDate} → {analysisParams.endDate}</p>
+        <p className="text-[10px] text-slate-400">Scale: {analysisParams.scale}m • {analysisParams.classifier}</p>
+      </div>
+
+      {/* Open Full Panel */}
+      <button
+        onClick={() => setActivePanel('data-input')}
+        className="w-full py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 text-[10px] font-medium rounded-lg transition-colors"
+      >
+        Open Data Input Panel →
+      </button>
+    </div>
+  );
+}
+
+function GEEScriptsQuickPanel() {
+  const { geeScripts, activeScript, setActiveScript, setActivePanel } = useAppStore();
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-xs font-semibold text-slate-300">GEE Scripts</h3>
+      
+      {/* Active Script */}
+      {activeScript && (
+        <div className="p-2.5 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
+          <p className="text-[10px] text-slate-500">Active Script</p>
+          <p className="text-[10px] text-emerald-400 font-medium truncate">{activeScript.name}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{activeScript.code.split('\n').length} lines</p>
+        </div>
+      )}
+
+      {/* Quick Script List */}
+      <div className="space-y-1">
+        {geeScripts.slice(0, 5).map((script) => (
+          <button
+            key={script.id}
+            onClick={() => setActiveScript(script)}
+            className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-left transition-colors ${
+              activeScript?.id === script.id
+                ? 'bg-slate-700 text-white'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+            }`}
+          >
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              script.category === 'lclu' ? 'bg-emerald-400' :
+              script.category === 'carbon' ? 'bg-blue-400' :
+              script.category === 'change' ? 'bg-violet-400' :
+              'bg-slate-400'
+            }`} />
+            <span className="text-[10px] truncate">{script.name}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Open Full Editor */}
+      <button
+        onClick={() => setActivePanel('gee-scripts')}
+        className="w-full py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 text-[10px] font-medium rounded-lg transition-colors"
+      >
+        Open Script Editor →
+      </button>
     </div>
   );
 }

@@ -22,7 +22,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import engine as db_engine
-from app.routers import engine, analysis, layers, export
+from app.routers import engine, analysis, layers, export, data_input, gee_scripts
 from app.engines.base import ProcessingEngine
 from app.engines.gee_engine import GEEEngine
 from app.engines.gpu_engine import GPUEngine
@@ -197,6 +197,18 @@ app.include_router(
     export.router,
     prefix="/api/v1/export",
     tags=["Export"],
+)
+
+app.include_router(
+    data_input.router,
+    prefix="/api/v1/data",
+    tags=["Data Input"],
+)
+
+app.include_router(
+    gee_scripts.router,
+    prefix="/api/v1/scripts",
+    tags=["GEE Scripts"],
 )
 
 
