@@ -24,7 +24,7 @@ export function GEEScriptPanel() {
     if (activeScript) {
       setScriptName(activeScript.name);
     }
-  }, [activeScript?.id]);
+  }, [activeScript]);
 
   const handleRun = () => {
     if (!activeScript) return;

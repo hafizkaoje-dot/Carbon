@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../store/appStore';
-import { MapPin, ZoomIn, ZoomOut, Crosshair, Maximize2 } from 'lucide-react';
+import { MapPin, ZoomIn, ZoomOut, Crosshair } from 'lucide-react';
+import L from 'leaflet';
 
 export function MapView() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const leafletMapRef = useRef<any>(null);
+  const leafletMapRef = useRef<L.Map | null>(null);
   const { mapCenter, mapZoom, setMapCenter, setMapZoom, engineMode, aoi, setAOI } = useAppStore();
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
@@ -12,23 +13,19 @@ export function MapView() {
   useEffect(() => {
     if (!mapRef.current || leafletMapRef.current) return;
 
-    // Dynamically import Leaflet
-    const initMap = async () => {
-      const L = await import('leaflet');
-      
-      // Fix default icon paths
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-      });
+    // Fix default icon paths
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
 
-      const map = L.map(mapRef.current!, {
-        center: mapCenter,
-        zoom: mapZoom,
-        zoomControl: false,
-      });
+    const map = L.map(mapRef.current, {
+      center: mapCenter,
+      zoom: mapZoom,
+      zoomControl: false,
+    });
 
       // Add tile layer based on engine mode
       const tileUrl = engineMode === 'online'
@@ -45,20 +42,17 @@ export function MapView() {
       // Add scale control
       L.control.scale({ imperial: false }).addTo(map);
 
-      // Event listeners
-      map.on('moveend', () => {
-        const center = map.getCenter();
-        setMapCenter([center.lat, center.lng]);
-      });
+    // Event listeners
+    map.on('moveend', () => {
+      const center = map.getCenter();
+      setMapCenter([center.lat, center.lng]);
+    });
 
-      map.on('zoomend', () => {
-        setMapZoom(map.getZoom());
-      });
+    map.on('zoomend', () => {
+      setMapZoom(map.getZoom());
+    });
 
-      leafletMapRef.current = map;
-    };
-
-    initMap();
+    leafletMapRef.current = map;
 
     return () => {
       if (leafletMapRef.current) {
