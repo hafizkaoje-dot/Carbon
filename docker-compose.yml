@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Frontend - React Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://backend:8000
+    depends_on:
+      - backend
+
+  # Backend - FastAPI Application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/geocarbon
+      - REDIS_URL=redis://redis:6379/0
+      - GEE_PROJECT=projects/geocarbon-lclu
+    volumes:
+      - ./exports:/app/exports
+      - ./data:/app/data
+    depends_on:
+      - db
+      - redis
+
+  # PostgreSQL + PostGIS
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      - POSTGRES_DB=geocarbon
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/database/schemas:/docker-entrypoint-initdb.d
+
+  # Redis (Task Queue)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Celery Worker (Background Tasks)
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.main worker -l info
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/geocarbon
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./exports:/app/exports
+      - ./data:/app/data
+    depends_on:
+      - db
+      - redis
+    # GPU support (uncomment for NVIDIA GPU access)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  pgdata:
