@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useAppStore, AnalysisType } from '../store/appStore';
 import { Play, BarChart3, Leaf, TreePine, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { SafeChartContainer } from './SafeChartContainer';
+import { ErrorBoundary } from './ErrorBoundary';
 
 const analysisOptions = [
   { id: 'lclu' as AnalysisType, label: 'LCLU Classification', icon: BarChart3, color: 'emerald', description: 'Random Forest land cover mapping' },
@@ -195,39 +197,47 @@ export function AnalysisPanel() {
               {/* Pie Chart */}
               <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
                 <h4 className="text-xs font-semibold text-slate-300 mb-3">Class Distribution</h4>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={classDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
-                      dataKey="value"
-                      label={({ name, value }) => `${name} ${value}%`}
-                    >
-                      {classDistribution.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                <ErrorBoundary>
+                  <SafeChartContainer width="100%" height={200}>
+                    {({ width, height }) => (
+                      <PieChart width={width} height={height}>
+                        <Pie
+                          data={classDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={70}
+                          dataKey="value"
+                          label={({ name, value }) => `${name} ${value}%`}
+                        >
+                          {classDistribution.map((entry, index) => (
+                            <Cell key={index} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    )}
+                  </SafeChartContainer>
+                </ErrorBoundary>
               </div>
 
               {/* Bar Chart */}
               <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
                 <h4 className="text-xs font-semibold text-slate-300 mb-3">Carbon by Zone (tC/ha)</h4>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={carbonData}>
-                    <XAxis dataKey="zone" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <Tooltip />
-                    <Bar dataKey="forest" fill="#059669" name="Forest" />
-                    <Bar dataKey="agriculture" fill="#84cc16" name="Agriculture" />
-                    <Bar dataKey="urban" fill="#d97706" name="Urban" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <ErrorBoundary>
+                  <SafeChartContainer width="100%" height={200}>
+                    {({ width, height }) => (
+                      <BarChart data={carbonData} width={width} height={height}>
+                        <XAxis dataKey="zone" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                        <Tooltip />
+                        <Bar dataKey="forest" fill="#059669" name="Forest" />
+                        <Bar dataKey="agriculture" fill="#84cc16" name="Agriculture" />
+                        <Bar dataKey="urban" fill="#d97706" name="Urban" />
+                      </BarChart>
+                    )}
+                  </SafeChartContainer>
+                </ErrorBoundary>
               </div>
             </div>
 

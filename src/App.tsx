@@ -8,11 +8,13 @@ import { ArchitecturePanel } from './components/ArchitecturePanel';
 import { DataInputPanel } from './components/DataInputPanel';
 import { GEEScriptPanel } from './components/GEEScriptPanel';
 import { StatusBar } from './components/StatusBar';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
   const { userMode, wizardActive, sidebarOpen, activePanel } = useAppStore();
 
   return (
+    <ErrorBoundary>
     <div className="h-screen w-screen flex flex-col bg-slate-900 text-white overflow-hidden">
       {/* Header with Engine Toggle & Mode Switch */}
       <Header />
@@ -59,5 +61,6 @@ export default function App() {
       {/* Status Bar */}
       <StatusBar />
     </div>
+    </ErrorBoundary>
   );
 }
